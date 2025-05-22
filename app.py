@@ -1,5 +1,4 @@
 
-
 import streamlit as st
 from openai import OpenAI, RateLimitError, OpenAIError
 from docx import Document
@@ -10,6 +9,8 @@ import os
 import re
 import requests
 import pandas as pd
+import calendar
+from datetime import datetime
 
 client = OpenAI(api_key=st.secrets["OPENAI_API_KEY"])
 
@@ -90,23 +91,14 @@ if st.sidebar.button("Generar Contenido") and tema:
             st.markdown(contenido_generado)
             st.code(contenido_generado, language="markdown")
 
-            st.markdown("### 🧾 Vista previa estilo post")
-            with st.container():
-                st.markdown("""
-                <div style="border:1px solid #ccc; border-radius:10px; padding:15px; background-color:#fff; max-width:600px">
-                    <div style="display:flex; align-items:center;">
-                        <img src="https://i.imgur.com/6VBx3io.png" width="40" height="40" style="border-radius:50%; margin-right:10px;">
-                        <strong>AutoContent_Agency</strong>
-                    </div>
-                    <div style="margin-top:10px; font-size:15px; line-height:1.5; color:#333;">
-                        {content}
-                    </div>
-                </div>
-                """.replace("{content}", contenido_generado.replace("\n", "<br>")),
-                unsafe_allow_html=True)
+            st.markdown("### 📤 Compartir contenido")
+            st.button("📋 Copiar contenido al portapapeles", on_click=lambda: st.session_state.update({"copiar": contenido_generado}))
+            twitter_text = contenido_generado[:280].replace(" ", "%20").replace("\n", "%0A")
+            twitter_url = f"https://twitter.com/intent/tweet?text={twitter_text}"
+            st.markdown(f"[🐦 Compartir en Twitter]({twitter_url})", unsafe_allow_html=True)
+            st.info("📸 Para Instagram: Copia el texto y publícalo directamente como descripción del post o en un carrusel.")
 
             st.markdown("### 📑 Ver como carrusel para Instagram")
-            slides = []
             def generate_carrusel_slides(text, max_chars=400):
                 paragraphs = text.split('\n')
                 slides = []
@@ -122,7 +114,6 @@ if st.sidebar.button("Generar Contenido") and tema:
                 return slides
 
             slides = generate_carrusel_slides(contenido_generado)
-
             for i, slide in enumerate(slides, 1):
                 with st.expander(f"🖼️ Slide {i} de {len(slides)}"):
                     st.write(slide)
@@ -130,28 +121,31 @@ if st.sidebar.button("Generar Contenido") and tema:
             if st.download_button("📥 Descargar como archivo .txt (Carrusel)", contenido_generado.encode("utf-8"), file_name="carrusel.txt"):
                 st.success("Descarga iniciada.")
 
-            # Compartir
-            st.markdown("### 📤 Compartir contenido")
-            st.button("📋 Copiar contenido al portapapeles", on_click=lambda: st.session_state.update({"copiar": contenido_generado}))
-            twitter_text = contenido_generado[:280].replace(" ", "%20").replace("\n", "%0A")
-            twitter_url = f"https://twitter.com/intent/tweet?text={twitter_text}"
-            st.markdown(f"[🐦 Compartir en Twitter]({twitter_url})", unsafe_allow_html=True)
-            st.info("📸 Para Instagram: Copia el texto y publícalo directamente como descripción del post o en un carrusel.")
+            st.markdown("### 🧾 Vista previa estilo post")
+            with st.container():
+                st.markdown("""
+                <div style="border:1px solid #ccc; border-radius:10px; padding:15px; background-color:#fff; max-width:600px">
+                    <div style="display:flex; align-items:center;">
+                        <img src="https://i.imgur.com/6VBx3io.png" width="40" height="40" style="border-radius:50%; margin-right:10px;">
+                        <strong>Evy</strong>
+                    </div>
+                    <div style="margin-top:10px; font-size:15px; line-height:1.5; color:#333;">
+                        {content}
+                    </div>
+                </div>
+                """.replace("{content}", contenido_generado.replace("\n", "<br>")),
+                unsafe_allow_html=True)
 
-            # Imagen con DALL·E
             st.info("🖼️ Generando imagen relacionada con el contenido...")
             image_response = client.images.generate(
                 model="dall-e-3",
-                prompt="Ambiente futbolístico profesional en un estadio lleno, fanáticos celebrando con banderas blancas y luces épicas. Inspirado en el espíritu del equipo Real Madrid, estilo realista, sin logos ni rostros específicos",
+                prompt="Ambiente natural minimalista con productos de cuidado de la piel en fondo neutro elegante, estilo realista, sin logotipos ni rostros.",
                 size="1024x1024",
                 quality="standard",
                 n=1
             )
             image_url = image_response.data[0].url
             st.image(image_url, caption="🎨 Imagen generada por IA", use_container_width=True)
-
-            st.markdown("📷 ¿No te gustó la imagen? Aquí tienes una alternativa de Unsplash:")
-            st.image("https://source.unsplash.com/1024x768/?soccer,stadium", caption="Alternativa realista", use_container_width=True)
 
             st.markdown("📤 O sube tu propia imagen para acompañar la publicación:")
             uploaded_image = st.file_uploader("Sube una imagen", type=["png", "jpg", "jpeg"])
@@ -201,18 +195,28 @@ if st.sidebar.button("Generar Contenido") and tema:
 else:
     st.info("Ingresa un tema para generar contenido.")
 
-if st.session_state.historial:
-    st.subheader("🗓️ Publicaciones Programadas")
+# === Calendario visual de publicaciones ===
+st.subheader("📆 Calendario de publicaciones")
 
-    df_historial = pd.DataFrame(st.session_state.historial)
-    csv_data = df_historial.to_csv(index=False).encode("utf-8")
-    st.download_button(
-        label="📥 Descargar historial completo (CSV)",
-        data=csv_data,
-        file_name="historial_completo.csv",
-        mime="text/csv"
-    )
+if os.path.exists("historial.csv"):
+    df = pd.read_csv("historial.csv")
+    df["Fecha"] = pd.to_datetime(df["Fecha"])
 
-    for item in reversed(st.session_state.historial):
-        with st.expander(f"{item['fecha']} {item['hora']} - {item['tipo']} - {item['tema']}"):
-            st.markdown(item['contenido'])
+    hoy = datetime.now()
+    mes = hoy.month
+    anio = hoy.year
+    dias_mes = calendar.monthrange(anio, mes)[1]
+
+    calendario = {day: [] for day in range(1, dias_mes + 1)}
+    for _, row in df[df["Fecha"].dt.month == mes].iterrows():
+        dia = row["Fecha"].day
+        contenido = f"- 📝 **{row['Tema']}** ({row['Tipo']}) a las {row['Hora']}"
+        calendario[dia].append(contenido)
+
+    for dia in range(1, dias_mes + 1):
+        if calendario[dia]:
+            with st.expander(f"📅 {dia}/{mes}/{anio} ({len(calendario[dia])} publicaciones)"):
+                for item in calendario[dia]:
+                    st.markdown(item)
+else:
+    st.info("No hay publicaciones programadas aún.")
