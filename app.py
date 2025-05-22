@@ -89,6 +89,14 @@ if st.sidebar.button("Generar Contenido") and tema:
             st.markdown(contenido_generado)
             st.code(contenido_generado, language="markdown")
 
+            # Compartir
+            st.markdown("### 📤 Compartir contenido")
+            st.button("📋 Copiar contenido al portapapeles", on_click=lambda: st.session_state.update({"copiar": contenido_generado}))
+            twitter_text = contenido_generado[:280].replace(" ", "%20").replace("\n", "%0A")
+            twitter_url = f"https://twitter.com/intent/tweet?text={twitter_text}"
+            st.markdown(f"[🐦 Compartir en Twitter]({twitter_url})", unsafe_allow_html=True)
+            st.info("📸 Para Instagram: Copia el texto y publícalo directamente como descripción del post o en un carrusel.")
+
             # Imagen con DALL·E
             st.info("🖼️ Generando imagen relacionada con el contenido...")
             image_response = client.images.generate(
@@ -148,7 +156,7 @@ if st.sidebar.button("Generar Contenido") and tema:
                     "hora": str(hora)
                 })
                 guardar_en_csv(tema, contenido_generado, fecha, hora, tipo_contenido)
-                st.success(f"Contenido agendado para {fecha} a las {hora}.")
+                st.success("✅ Contenido guardado correctamente.")
 else:
     st.info("Ingresa un tema para generar contenido.")
 
@@ -167,3 +175,4 @@ if st.session_state.historial:
     for item in reversed(st.session_state.historial):
         with st.expander(f"{item['fecha']} {item['hora']} - {item['tipo']} - {item['tema']}"):
             st.markdown(item['contenido'])
+
