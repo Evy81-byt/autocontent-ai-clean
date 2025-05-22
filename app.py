@@ -1,4 +1,5 @@
 
+
 import streamlit as st
 from openai import OpenAI, RateLimitError, OpenAIError
 from docx import Document
@@ -22,6 +23,23 @@ body, div, input, button, textarea {
 }
 </style>
 """, unsafe_allow_html=True)
+
+
+# === LOGIN SIMPLE ===
+if "usuario" not in st.session_state:
+    st.session_state.usuario = ""
+
+st.sidebar.title("👤 Iniciar sesión")
+usuario_input = st.sidebar.text_input("Tu nombre de usuario", value=st.session_state.usuario)
+if st.sidebar.button("Entrar") and usuario_input.strip():
+    st.session_state.usuario = usuario_input.strip()
+
+if not st.session_state.usuario:
+    st.warning("Por favor, ingresa tu nombre de usuario para acceder a la app.")
+    st.stop()
+
+usuario = st.session_state.usuario
+st.success(f"Bienvenido, {usuario} 👋")
 
 st.title("🧠 AutoContent AI - Generador de Contenido Automatizado")
 
@@ -63,7 +81,7 @@ def obtener_descarga_binaria(ruta_archivo):
     return base64.b64encode(data).decode()
 
 def guardar_en_csv(tema, contenido, fecha, hora, tipo):
-    archivo = "historial.csv"
+    archivo = f"historial_{usuario.lower()}.csv"
     existe = os.path.isfile(archivo)
     with open(archivo, mode="a", encoding="utf-8", newline="") as f:
         writer = csv.writer(f)
