@@ -90,6 +90,21 @@ if st.sidebar.button("Generar Contenido") and tema:
             st.markdown(contenido_generado)
             st.code(contenido_generado, language="markdown")
 
+            st.markdown("### 🧾 Vista previa estilo post")
+            with st.container():
+                st.markdown("""
+                <div style="border:1px solid #ccc; border-radius:10px; padding:15px; background-color:#fff; max-width:600px">
+                    <div style="display:flex; align-items:center;">
+                        <img src="https://i.imgur.com/6VBx3io.png" width="40" height="40" style="border-radius:50%; margin-right:10px;">
+                        <strong>AutoContent_Agency</strong>
+                    </div>
+                    <div style="margin-top:10px; font-size:15px; line-height:1.5; color:#333;">
+                        {content}
+                    </div>
+                </div>
+                """.replace("{content}", contenido_generado.replace("\n", "<br>")),
+                unsafe_allow_html=True)
+
             st.markdown("### 📑 Ver como carrusel para Instagram")
             slides = []
             def generate_carrusel_slides(text, max_chars=400):
@@ -201,4 +216,3 @@ if st.session_state.historial:
     for item in reversed(st.session_state.historial):
         with st.expander(f"{item['fecha']} {item['hora']} - {item['tipo']} - {item['tema']}"):
             st.markdown(item['contenido'])
-
