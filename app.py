@@ -1,4 +1,5 @@
 
+
 import streamlit as st
 from openai import OpenAI, RateLimitError, OpenAIError
 from docx import Document
@@ -88,6 +89,31 @@ if st.sidebar.button("Generar Contenido") and tema:
             st.subheader("✍️ Contenido Generado")
             st.markdown(contenido_generado)
             st.code(contenido_generado, language="markdown")
+
+            st.markdown("### 📑 Ver como carrusel para Instagram")
+            slides = []
+            def generate_carrusel_slides(text, max_chars=400):
+                paragraphs = text.split('\n')
+                slides = []
+                current = ""
+                for para in paragraphs:
+                    if len(current) + len(para) < max_chars:
+                        current += para + "\n"
+                    else:
+                        slides.append(current.strip())
+                        current = para + "\n"
+                if current.strip():
+                    slides.append(current.strip())
+                return slides
+
+            slides = generate_carrusel_slides(contenido_generado)
+
+            for i, slide in enumerate(slides, 1):
+                with st.expander(f"🖼️ Slide {i} de {len(slides)}"):
+                    st.write(slide)
+
+            if st.download_button("📥 Descargar como archivo .txt (Carrusel)", contenido_generado.encode("utf-8"), file_name="carrusel.txt"):
+                st.success("Descarga iniciada.")
 
             # Compartir
             st.markdown("### 📤 Compartir contenido")
