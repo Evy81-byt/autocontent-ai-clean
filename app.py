@@ -57,4 +57,5 @@ def generar_pdf(texto, nombre_archivo):
     pdf.set_font("Arial", size=12)
     for linea in texto.split("\n"):
         try:
-            linea = re.sub(r'[^
+           linea = re.sub(r'[^\x00-\x7F\u00A1-\u00FF]+', '', linea)
+
