@@ -40,16 +40,18 @@ if "usuario" not in st.session_state:
 
 st.sidebar.title("👤 Iniciar sesión")
 usuario_input = st.sidebar.text_input("Tu nombre de usuario", value=st.session_state.usuario)
+
 if st.sidebar.button("Entrar") and usuario_input.strip():
     st.session_state.usuario = usuario_input.strip()
+    st.experimental_rerun()  # Esto fuerza la recarga de la app y evita errores de estado
 
-if not st.session_state.usuario:
+if "usuario" not in st.session_state or not st.session_state.usuario:
     st.warning("Por favor, ingresa tu nombre de usuario para acceder a la app.")
     st.stop()
 
 usuario = st.session_state.usuario
 st.success(f"Bienvenido, {usuario} 👋")
-st.title("🧠 AutoContent AI - Generador de Contenido Automatizado")
+
 
 if "historial" not in st.session_state:
     st.session_state.historial = []
