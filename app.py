@@ -18,7 +18,7 @@ creds_dict = json.loads(st.secrets["GOOGLE_CREDENTIALS"])
 creds = Credentials.from_service_account_info(creds_dict, scopes=scope)
 client_sheets = gspread.authorize(creds)
 try:
-    sheet = client_sheets.open("historial_autocontent_ai").sheet1
+   sheet = client_sheets.open_by_key("12empnPv4Dpu1PDqvyQd68OqC0GjqhMjBO_ArFV4zuIk").sheet1
 except Exception as e:
     st.error("❌ No se pudo acceder a la hoja 'historial_autocontent_ai'.")
     st.error(f"Detalles técnicos: {e}")
