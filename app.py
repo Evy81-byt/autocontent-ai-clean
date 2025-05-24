@@ -17,8 +17,9 @@ scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/au
 creds_dict = json.loads(st.secrets["GOOGLE_CREDENTIALS"])
 creds = Credentials.from_service_account_info(creds_dict, scopes=scope)
 client_sheets = gspread.authorize(creds)
+
 try:
-   sheet = client_sheets.open_by_key("12empnPv4Dpu1PDqvyQd68OqC0GjqhMjBO_ArFV4zuIk").sheet1
+    sheet = client_sheets.open_by_key("12empnPv4Dpu1PDqvyQd68OqC0GjqhMjBO_ArFV4zuIk").sheet1
 except Exception as e:
     st.error("❌ No se pudo acceder a la hoja 'historial_autocontent_ai'.")
     st.error(f"Detalles técnicos: {e}")
@@ -26,11 +27,10 @@ except Exception as e:
 
 def guardar_en_hoja(usuario, tema, contenido, fecha, hora):
     fila = [usuario, tema, str(fecha), str(hora), contenido]
-   if sheet:
-    sheet.append_row(fila)
-else:
-    st.warning("⚠️ No se pudo guardar en Google Sheets porque no hay conexión con la hoja.")
-
+    if sheet:
+        sheet.append_row(fila)
+    else:
+        st.warning("⚠️ No se pudo guardar en Google Sheets porque no hay conexión con la hoja.")
 
 client = OpenAI(api_key=st.secrets["OPENAI_API_KEY"])
 st.set_page_config(page_title="AutoContent AI", layout="wide")
