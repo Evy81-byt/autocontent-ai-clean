@@ -1,5 +1,4 @@
-# Crear archivo app.py corregido con todo listo para Google Sheets
-app_code_final = """
+
 import streamlit as st
 from openai import OpenAI
 from docx import Document
@@ -9,12 +8,14 @@ import os
 import re
 from datetime import date, time
 import gspread
+import json
 from google.oauth2.service_account import Credentials
 
-# Conexión a Google Sheets
+# Leer las credenciales desde st.secrets
 scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/spreadsheets",
          "https://www.googleapis.com/auth/drive.file", "https://www.googleapis.com/auth/drive"]
-creds = Credentials.from_service_account_file("credentials.json", scopes=scope)
+creds_dict = json.loads(st.secrets["GOOGLE_CREDENTIALS"])
+creds = Credentials.from_service_account_info(creds_dict, scopes=scope)
 client_sheets = gspread.authorize(creds)
 sheet = client_sheets.open("historial_autocontent_ai").sheet1
 
@@ -54,82 +55,6 @@ def generar_pdf(texto, nombre_archivo):
     pdf.add_page()
     pdf.set_auto_page_break(auto=True, margin=15)
     pdf.set_font("Arial", size=12)
-    for linea in texto.split("\\n"):
+    for linea in texto.split("\n"):
         try:
-            linea = re.sub(r'[^\x00-\x7F\u00A1-\u00FF]+', '', linea)
-            pdf.multi_cell(0, 10, linea)
-        except:
-            continue
-    pdf.output(nombre_archivo)
-
-def generar_docx(texto, nombre_archivo):
-    doc = Document()
-    for linea in texto.split("\\n"):
-        doc.add_paragraph(linea)
-    doc.save(nombre_archivo)
-
-def obtener_descarga_binaria(ruta_archivo):
-    with open(ruta_archivo, "rb") as f:
-        data = f.read()
-    return base64.b64encode(data).decode()
-
-if st.sidebar.button("Generar Contenido") and tema:
-    with st.spinner("Generando contenido con IA..."):
-        prompt = f"Escribe un {tipo_contenido.lower()} sobre el tema '{tema}' con un tono {tono.lower()}. El contenido debe estar optimizado para redes sociales y blogs, con ideas visuales y llamado a la acción."
-
-        response = client.chat.completions.create(
-            model="gpt-3.5-turbo",
-            messages=[
-                {"role": "system", "content": "Eres un experto en redacción y marketing digital."},
-                {"role": "user", "content": prompt}
-            ],
-            max_tokens=800,
-            temperature=0.7
-        )
-        contenido_generado = response.choices[0].message.content
-
-        st.subheader("✍️ Contenido Generado")
-        st.markdown(contenido_generado)
-        st.code(contenido_generado, language="markdown")
-
-        nombre_pdf = "contenido_generado.pdf"
-        nombre_docx = "contenido_generado.docx"
-
-        generar_pdf(contenido_generado, nombre_pdf)
-        generar_docx(contenido_generado, nombre_docx)
-
-        pdf_encoded = obtener_descarga_binaria(nombre_pdf)
-        docx_encoded = obtener_descarga_binaria(nombre_docx)
-
-        col1, col2 = st.columns(2)
-        with col1:
-            st.download_button("📄 Descargar PDF", base64.b64decode(pdf_encoded), nombre_pdf, "application/pdf")
-        with col2:
-            st.download_button("📝 Descargar Word", base64.b64decode(docx_encoded), nombre_docx, "application/vnd.openxmlformats-officedocument.wordprocessingml.document")
-
-        with st.expander("📅 Programar Publicación"):
-            fecha = st.date_input("Fecha de publicación", value=date.today())
-            hora = st.time_input("Hora de publicación", value=time(12, 0))
-            if st.button("📌 Guardar programación"):
-                st.session_state.historial.append({
-                    "tema": tema,
-                    "contenido": contenido_generado,
-                    "fecha": str(fecha),
-                    "hora": str(hora)
-                })
-                guardar_en_hoja(usuario, tema, contenido_generado, fecha, hora)
-                st.success(f"Contenido agendado para {fecha} a las {hora}.")
-
-if st.session_state.historial:
-    st.subheader("🗓️ Publicaciones Programadas")
-    for item in reversed(st.session_state.historial):
-        with st.expander(f"{item['fecha']} {item['hora']} - {item['tema']}"):
-            st.markdown(item["contenido"])
-"""
-
-# Guardar archivo final
-file_path_final = "/mnt/data/app.py"
-with open(file_path_final, "w", encoding="utf-8") as f:
-    f.write(app_code_final)
-
-file_path_final
+            linea = re.sub(r'[^
